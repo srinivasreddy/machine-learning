@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+creditcardfraud.zip
+creditcard.csv
+data/Real_Estate_Sales_2001-2022_GL.csv
