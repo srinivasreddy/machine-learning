@@ -9,16 +9,17 @@ TOKEN =  os.getenv("gh_token")
 OWNER = "python"
 REPO = "cpython"
 
-LIMIT = 1000000
+LIMIT = 100000
 
 
-def fetch_issues(owner, repo, state="all", per_page=100):
+def fetch_issues(owner, repo, state="all", per_page=500):
     issues_data = []
     url = f"https://api.github.com/repos/{owner}/{repo}/issues"
     params = {"state": state, "per_page": per_page, "page": 1}
     headers = {"Authorization": f"token {TOKEN}"}
     counter = 0
     while counter <= LIMIT:
+        print(f"the counter is {counter}")
         response = requests.get(url, headers=headers, params=params)
         if response.status_code != 200:
             print("Error:", response.json())
@@ -30,7 +31,7 @@ def fetch_issues(owner, repo, state="all", per_page=100):
 
         issues_data.extend(issues_page)
         params["page"] += 1
-        counter += 100
+        counter += 500
     return issues_data
 
 def get_reactions(data):
