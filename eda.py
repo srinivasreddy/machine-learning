@@ -1,12 +1,15 @@
 import requests
 import csv
-import os 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 TOKEN =  os.getenv("gh_token")
 OWNER = "python"
 REPO = "cpython"
 
-LIMIT = 1000
+LIMIT = 1000000
 
 
 def fetch_issues(owner, repo, state="all", per_page=100):
@@ -119,6 +122,8 @@ def main():
                     issue.get("html_url")
                 ]
             )
+
+
 
 
 if __name__ == "__main__":
