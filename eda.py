@@ -1,7 +1,8 @@
 import requests
 import csv
+import os 
 
-TOKEN = "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"
+TOKEN =  os.getenv("gh_token")
 OWNER = "python"
 REPO = "cpython"
 
