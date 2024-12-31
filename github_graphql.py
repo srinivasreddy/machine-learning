@@ -8,8 +8,8 @@ from gql.transport.requests import RequestsHTTPTransport
 
 load_dotenv()
 TOKEN = os.getenv("gh_token")
-OWNER = "python"
-REPO = "cpython"
+OWNER = "rust-lang"
+REPO = "rust"
 
 # GraphQL query for fetching issues and PRs
 QUERY = """
@@ -193,7 +193,7 @@ def process_item(item, item_type):
 def main():
     issues, prs = fetch_data()
     
-    with open("github_issues.csv", "w", newline="", encoding="utf-8") as f:
+    with open(f"github_{REPO}_issues.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
             "id", "number", "title", "state", "pr_status",
