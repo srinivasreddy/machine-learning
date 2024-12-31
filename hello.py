@@ -11,14 +11,14 @@ df = pd.DataFrame({"Date": dates, "Value": values})
 df.set_index("Date", inplace=True)
 
 # 3. Calculate rolling averages
-df["7d_Rolling"]  = df["Value"].rolling(window=7).mean()
+df["7d_Rolling"] = df["Value"].rolling(window=7).mean()
 df["30d_Rolling"] = df["Value"].rolling(window=30).mean()
 
 # 4. Plot raw values and rolling averages
 plt.figure(figsize=(10, 5))
-plt.plot(df.index, df["Value"],         label="Raw Data",       alpha=0.5)
-plt.plot(df.index, df["7d_Rolling"],    label="7-Day Rolling",  lw=2)
-plt.plot(df.index, df["30d_Rolling"],   label="30-Day Rolling", lw=2)
+plt.plot(df.index, df["Value"], label="Raw Data", alpha=0.5)
+plt.plot(df.index, df["7d_Rolling"], label="7-Day Rolling", lw=2)
+plt.plot(df.index, df["30d_Rolling"], label="30-Day Rolling", lw=2)
 plt.title("Sample Data with Rolling Averages")
 plt.xlabel("Date")
 plt.ylabel("Value")

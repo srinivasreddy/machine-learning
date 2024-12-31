@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN =  os.getenv("gh_token")
+TOKEN = os.getenv("gh_token")
 OWNER = "python"
 REPO = "cpython"
 
-LIMIT = 100000
+LIMIT = 1000
 
 
 def fetch_issues(owner, repo, state="all", per_page=500):
@@ -28,11 +28,20 @@ def fetch_issues(owner, repo, state="all", per_page=500):
         issues_page = response.json()
         if not issues_page:
             break
+        for item in issues_page:
+            if "pull_request" in item:
+                pr_url = item["pull_request"]["url"]
+                pr_response = requests.get(pr_url, headers=headers)
+                if pr_response.status_code == 200:
+                    pr_data = pr_response.json()
+                    item["pr_merged"] = pr_data.get("merged", False)
+                    item["pr_merged_at"] = pr_data.get("merged_at")
 
         issues_data.extend(issues_page)
         params["page"] += 1
         counter += 500
     return issues_data
+
 
 def get_reactions(data):
     try:
@@ -41,6 +50,7 @@ def get_reactions(data):
         for i in data.get("reactions", {}).values():
             print(i, "\n")
     return 0
+
 
 def main():
     issues = fetch_issues(OWNER, REPO)
@@ -52,6 +62,7 @@ def main():
                 "number",
                 "title",
                 "state",
+                "pr_status",
                 "created_at",
                 "closed_at",
                 "updated_at",
@@ -67,15 +78,22 @@ def main():
                 "linked_prs",
                 "is_locked",
                 "participants_count",
-                "url"
+                "url",
             ]
         )
 
         for issue in issues:
             if "pull_request" in issue:
                 _type = "pull_request"
+                if issue.get("pr_merged", False):
+                    pr_status = "merged"
+                elif issue["state"] == "closed":
+                    pr_status = "rejected"
+                else:
+                    pr_status = "open"
             else:
                 _type = "issue"
+                pr_status = None
 
             labels = [label["name"] for label in issue.get("labels", [])]
             assignees = [assignee["login"] for assignee in issue.get("assignees", [])]
@@ -97,6 +115,7 @@ def main():
                     issue.get("number"),
                     issue.get("title", "").replace("\n", " ").replace(",", " "),
                     issue.get("state"),
+                    pr_status,
                     created_at,
                     closed_at,
                     issue.get("updated_at"),
@@ -109,9 +128,7 @@ def main():
                     if issue.get("milestone")
                     else None,
                     len(issue.get("body", "")) if issue.get("body") else 0,
-                    get_reactions(issue)
-                    if issue.get("reactions")
-                    else 0,
+                    get_reactions(issue) if issue.get("reactions") else 0,
                     time_to_close,
                     len(issue.get("pull_request", {}).get("links", []))
                     if "pull_request" in issue
@@ -120,11 +137,9 @@ def main():
                     issue.get(
                         "comments", 0
                     ),  # Using comments as a proxy for participants
-                    issue.get("html_url")
+                    issue.get("html_url"),
                 ]
             )
-
-
 
 
 if __name__ == "__main__":
