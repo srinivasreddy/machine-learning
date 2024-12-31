@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from wordcloud import WordCloud
 
 
 def analysis():
@@ -375,6 +376,172 @@ def analyze_contribution_diversity():
     plt.ylabel("Number of Users")
     plt.show()
 
+def analyze_resolution_rate():
+    """Analyze the rate at which issues are being resolved over time"""
+    df = pd.read_csv("github_issues.csv")
+    df["created_at"] = pd.to_datetime(df["created_at"])
+    df["closed_at"] = pd.to_datetime(df["closed_at"])
+    
+    # Group by month
+    monthly_created = df.groupby(df["created_at"].dt.to_period("M")).size()
+    monthly_closed = df.groupby(df["closed_at"].dt.to_period("M")).size()
+    
+    # Calculate running ratio
+    cumulative_created = monthly_created.cumsum()
+    cumulative_closed = monthly_closed.cumsum()
+    resolution_rate = (cumulative_closed / cumulative_created) * 100
+    
+    plt.figure(figsize=(12, 6))
+    resolution_rate.plot(kind='line', marker='o')
+    plt.title("Issue Resolution Rate Over Time")
+    plt.xlabel("Month")
+    plt.ylabel("Resolution Rate (%)")
+    plt.grid(True)
+    plt.show()
+def analyze_priority_response():
+    """Analyze response times based on issue priority/severity"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # You might need to adjust this based on your actual label format
+    df["is_high_priority"] = df["labels"].str.contains("high|critical|priority", case=False)
+    
+    df["created_at"] = pd.to_datetime(df["created_at"])
+    df["first_response_at"] = pd.to_datetime(df["first_response_at"])
+    df["response_time"] = (df["first_response_at"] - df["created_at"]).dt.total_seconds() / (24 * 60 * 60)
+    
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x="is_high_priority", y="response_time", data=df)
+    plt.title("Response Time by Priority")
+    plt.xlabel("High Priority")
+    plt.ylabel("Days to First Response")
+    plt.show()
+
+
+def analyze_label_word_cloud():
+    """Create a word cloud visualization of issue labels"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # Combine all labels into a single string
+    # Assuming labels are stored as strings, we'll join them with spaces
+    all_labels = ' '.join(df['labels'].dropna())
+    
+    # Create and generate a word cloud image
+    wordcloud = WordCloud(
+        width=800, 
+        height=400,
+        background_color='white',
+        max_words=100
+    ).generate(all_labels)
+    
+    # Display the word cloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.title('Word Cloud of Issue Labels')
+    plt.tight_layout(pad=0)
+    plt.show()
+
+
+def analyze_seasonal_patterns():
+    """Analyze seasonal patterns in issue creation and resolution"""
+    df = pd.read_csv("github_issues.csv")
+    df["created_at"] = pd.to_datetime(df["created_at"])
+    
+    # Hour of day analysis
+    plt.figure(figsize=(15, 5))
+    
+    plt.subplot(131)
+    df["created_at"].dt.hour.value_counts().sort_index().plot(kind='bar')
+    plt.title("Issues by Hour of Day")
+    plt.xlabel("Hour")
+    
+    plt.subplot(132)
+    df["created_at"].dt.dayofweek.value_counts().sort_index().plot(kind='bar')
+    plt.title("Issues by Day of Week")
+    plt.xlabel("Day (0=Monday)")
+    
+    plt.subplot(133)
+    df["created_at"].dt.month.value_counts().sort_index().plot(kind='bar')
+    plt.title("Issues by Month")
+    plt.xlabel("Month")
+    
+    plt.tight_layout()
+    plt.show()
+
+
+def analyze_issue_size_metrics():
+    """Analyze relationships between issue size metrics and resolution time"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # Calculate correlations between various metrics
+    metrics = ["body_length", "comments", "time_to_close_days", "reactions"]
+    correlation_matrix = df[metrics].corr()
+    
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+    plt.title("Correlation between Issue Metrics")
+    plt.show()
+
+
+def analyze_user_interactions():
+    """Analyze user interaction patterns through comments"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # Assuming you have a comments dataset with author information
+    # This is a simplified version - you'd need actual comment data
+    interactions = df.groupby(['user', 'assignee']).size().reset_index(name='count')
+    
+    # Create a network visualization for top interactions
+    top_interactions = interactions.nlargest(20, 'count')
+    
+    plt.figure(figsize=(12, 8))
+    plt.scatter(range(len(top_interactions)), top_interactions['count'])
+    plt.title("Top User Interactions")
+    plt.xlabel("Interaction Pair")
+    plt.ylabel("Number of Interactions")
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+def analyze_issue_templates():
+    """Analyze the effectiveness of issue templates if used"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # Assuming you can detect template usage through body content
+    df["uses_template"] = df["body"].str.contains("### Description|## Expected Behavior", na=False)
+    
+    # Compare metrics for template vs non-template issues
+    metrics = ["time_to_close_days", "comments", "reactions"]
+    
+    plt.figure(figsize=(15, 5))
+    for i, metric in enumerate(metrics, 1):
+        plt.subplot(1, 3, i)
+        sns.boxplot(x="uses_template", y=metric, data=df)
+        plt.title(f"{metric} by Template Usage")
+    
+    plt.tight_layout()
+    plt.show()
+
+
+def analyze_time_to_first_commit():
+    """Analyze time between issue creation and first related commit"""
+    df = pd.read_csv("github_issues.csv")
+    
+    # Assuming you have first_commit_at data
+    df["created_at"] = pd.to_datetime(df["created_at"])
+    df["first_commit_at"] = pd.to_datetime(df["first_commit_at"])
+    
+    df["time_to_commit"] = (
+        df["first_commit_at"] - df["created_at"]
+    ).dt.total_seconds() / (24 * 60 * 60)
+    
+    plt.figure(figsize=(10, 6))
+    plt.hist(df["time_to_commit"].dropna(), bins=50)
+    plt.title("Time to First Commit Distribution")
+    plt.xlabel("Days")
+    plt.ylabel("Count")
+    plt.show()
+
 
 if __name__ == "__main__":
     # # analysis()
@@ -391,3 +558,12 @@ if __name__ == "__main__":
     
     print("\nTop PR Authors:")
     print(most_active_pr_authors())
+
+    analyze_label_word_cloud()
+    analyze_resolution_rate()
+    analyze_priority_response()
+    analyze_seasonal_patterns()
+    analyze_issue_size_metrics()
+    analyze_user_interactions()
+    analyze_issue_templates()
+    analyze_time_to_first_commit()
