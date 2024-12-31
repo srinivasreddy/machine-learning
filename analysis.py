@@ -120,7 +120,7 @@ def most_active_issue_creators(top_n=10):
     issues_df = df[df["type"] == "issue"]
     
     # Count issues by user
-    issue_counts = issues_df["user"].value_counts()
+    issue_counts = issues_df["author"].value_counts()
     
     # Create visualization
     plt.figure(figsize=(12, 6))
@@ -140,14 +140,16 @@ def most_active_pr_authors(top_n=10):
     Find users with the most merged pull requests.
     Args:
         top_n: Number of top users to return (default: 10)
+    Works good.
     """
+
     df = pd.read_csv("github_issues.csv")
     
     # Filter for merged PRs only
-    merged_prs_df = df[(df["type"] == "pull_request") & (df["state"] == "closed")]
+    merged_prs_df = df[(df["type"] == "pull_request") & (df["state"] == "MERGED")]
     
     # Count PRs by user
-    pr_counts = merged_prs_df["user"].value_counts()
+    pr_counts = merged_prs_df["author"].value_counts()
     
     # Create visualization
     plt.figure(figsize=(12, 6))
@@ -551,13 +553,13 @@ if __name__ == "__main__":
 
     # print("\nAverage Time to Close Issues (days):")
     # print(average_time_take_to_close_issue())
-    number_of_days_for_each_issue()
+    # number_of_days_for_each_issue()
 
-    print("\nTop Issue Creators:")
-    print(most_active_issue_creators())
+    # print("\nTop Issue Creators:")
+    # print(most_active_issue_creators())
     
     print("\nTop PR Authors:")
-    print(most_active_pr_authors())
+    most_active_pr_authors()
 
     analyze_label_word_cloud()
     analyze_resolution_rate()
